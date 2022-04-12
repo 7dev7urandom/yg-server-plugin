@@ -1,0 +1,36 @@
+  name: YGServerRunner
+  main: com.YGServer.main.YGServer
+  version: 1.0.0
+  author: 7dev7urandom
+  api-version: 1.13
+  commands:
+    cod:
+      description: Give or locate a disk
+      usage: "/cod give shulkerbox|strength|fly|phaser"
+    undecay:
+      description: Undecay a chunk
+      usage: "/undecay"
+    decay:
+      description: Trigger decay around a player
+      usage: "/decay"
+
+  #    implant:
+#      description: null
+#      usage: ""
+#    runcorner:
+#      description: null
+#      usage: ""
+#    power:
+#      description: Get or set the power level of a player
+#      usage: "/power get <player>
+#/power set <player> <value>"
+#    home:
+#      description: Set the home of a player
+#      usage: "/home [player] <where>"
+  permissions:
+    ygserver.shulkers:
+      description: Shulkerbox related permissions
+      children:
+        ygserver.shulkers.pickup_any: false
+        ygserver.shulkers.open_any: false
+  depend: [Essentials]
