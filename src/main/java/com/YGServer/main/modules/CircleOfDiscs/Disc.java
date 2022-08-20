@@ -1,4 +1,4 @@
-package com.YGServer.main.modules.CircleOfDiscs.discs;
+package com.YGServer.main.modules.CircleOfDiscs;
 
 import com.YGServer.main.YGServer;
 import com.YGServer.main.modules.CircleOfDiscs.CircleOfDiscs;
@@ -24,7 +24,7 @@ public class Disc implements Listener {
         this.item = item;
         this.id = id;
         ItemMeta meta = this.item.getItemMeta();
-        meta.getPersistentDataContainer().set(CircleOfDiscs.instance.discId, PersistentDataType.STRING, id);
+        meta.getPersistentDataContainer().set(CircleOfDiscs.discId, PersistentDataType.STRING, id);
 //        meta.set
         this.item.setItemMeta(meta);
         new BukkitRunnable(){
@@ -57,6 +57,8 @@ public class Disc implements Listener {
 
     public boolean isThis(ItemStack item) {
         if(item == null) return false;
-        return item.hasItemMeta() && item.getItemMeta().getPersistentDataContainer().has(CircleOfDiscs.instance.discId, PersistentDataType.STRING) && item.getItemMeta().getPersistentDataContainer().get(CircleOfDiscs.instance.discId, PersistentDataType.STRING).equals(this.getId());
+        return item.hasItemMeta()
+                && item.getItemMeta().getPersistentDataContainer().has(CircleOfDiscs.discId, PersistentDataType.STRING)
+                && item.getItemMeta().getPersistentDataContainer().get(CircleOfDiscs.discId, PersistentDataType.STRING).equals(this.getId());
     }
 }

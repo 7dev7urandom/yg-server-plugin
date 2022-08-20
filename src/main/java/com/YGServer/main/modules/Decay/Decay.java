@@ -1,5 +1,6 @@
 package com.YGServer.main.modules.Decay;
 
+import com.YGServer.main.PluginModule;
 import com.YGServer.main.YGServer;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -14,37 +15,45 @@ import org.bukkit.util.BoundingBox;
 
 import java.util.*;
 
-public class Decay implements Listener {
+public class Decay extends PluginModule implements Listener {
     private final Material[] DECAYABLE_BLOCKS = {Material.GRASS_BLOCK, Material.STONE, Material.DIRT, Material.SAND, Material.GRAVEL, Material.GLASS};
     YGServer main;
-    NamespacedKey decayedBlocks;
+    static NamespacedKey decayedBlocks;
     private final int MIN_DECAY_TIME = 60 * 5;
     private final int MAX_DECAY_TIME = 60 * 10;
 
+    private BukkitRunnable pending;
+
     public Decay(YGServer main) {
-        this.main = main;
-        this.main.getCommand("undecay").setExecutor(new UndecayCommand(main));
-        this.main.getCommand("decay").setExecutor(new DecayCommand(main));
+        super(main);
         decayedBlocks = new NamespacedKey(main, "decayedBlocks");
-        new BukkitRunnable() {
+        pending = new BukkitRunnable() {
             @Override
             public void run() {
                 tick();
             }
-        }.runTaskLater(main, 100);
+        };
+        this.main.getCommand("undecay").setExecutor(new UndecayCommand(main));
+        this.main.getCommand("decay").setExecutor(new DecayCommand(main));
+    }
+
+    @Override
+    public void onEnable() {
+        pending.runTaskLater(main, 20 * (int) (Math.random() * (MAX_DECAY_TIME - MIN_DECAY_TIME) + MIN_DECAY_TIME));
+    }
+
+    @Override
+    public void onDisable() {
+        pending.cancel();
     }
 
     void tick() {
-        new BukkitRunnable(){
-            @Override
-            public void run() {
-                tick();
-            }
-        }.runTaskLater(main, 20 * (int) (Math.random() * (MAX_DECAY_TIME - MIN_DECAY_TIME) + MIN_DECAY_TIME));
+        pending.runTaskLater(main, 20 * (int) (Math.random() * (MAX_DECAY_TIME - MIN_DECAY_TIME) + MIN_DECAY_TIME));
         if(!main.getConfig().getBoolean("doDecay", true)) return;
         Player[] players = main.getServer().getOnlinePlayers().toArray(new Player[0]);
         for (Player player : players) {
             if(main.essentials.getUser(player) != null && main.essentials.getUser(player).isAfk()) break;
+//            if(player.getWorld().getName().startsWith("world2")) break;
             decayBlockInPlayerRange(player, 10);
 //            if(Math.random() > 0.9) {
 //                DecayedBlock[] decayed = getDecayedBlocksFromBox(player.getLocation(), 1);

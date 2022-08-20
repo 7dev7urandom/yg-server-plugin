@@ -1,12 +1,11 @@
 package com.YGServer.main.modules.CircleOfDiscs;
 
 import com.YGServer.main.YGServer;
-import com.YGServer.main.modules.CircleOfDiscs.discs.Disc;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
+import org.jetbrains.annotations.NotNull;
 
 public class CODCommand implements CommandExecutor {
 
@@ -17,12 +16,14 @@ public class CODCommand implements CommandExecutor {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if(!sender.hasPermission("ygserver.cod.command.cod")) return true;
         if(args.length != 2) return false;
         switch (args[0]) {
             case "give":
-                main.circleOfDiscsModule.giveDisc(((Player)sender).getInventory(), args[1]);
+                if(!CircleOfDiscs.giveDisc(((Player)sender).getInventory(), args[1])) {
+                    sender.sendMessage("Disc does not exist. All discs: ", String.join(", ", CircleOfDiscs.discs.stream().map(d -> d.id).toList()));
+                }
                 return true;
         }
         return false;

@@ -13,7 +13,11 @@
     decay:
       description: Trigger decay around a player
       usage: "/decay"
-
+    ygmod:
+      description: Enable and disable YGPlugin modules
+      usage: |
+        /ygmod [list]
+        /ygmod enable|disable <moduleName>
   #    implant:
 #      description: null
 #      usage: ""
@@ -34,3 +38,7 @@
         ygserver.shulkers.pickup_any: false
         ygserver.shulkers.open_any: false
   depend: [Essentials]
+  softdepend:
+    - Multiverse-Core
+  loadbefore:
+    - Multiverse-Portals

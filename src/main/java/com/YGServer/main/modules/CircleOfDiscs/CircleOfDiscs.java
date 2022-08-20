@@ -1,10 +1,11 @@
 package com.YGServer.main.modules.CircleOfDiscs;
 
+import com.YGServer.main.PluginModule;
 import com.YGServer.main.YGServer;
-import com.YGServer.main.modules.CircleOfDiscs.discs.Disc;
 import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.*;
@@ -15,38 +16,39 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.plugin.InvalidDescriptionException;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import javax.naming.Name;
 import java.util.*;
 
-public class CircleOfDiscs implements Listener {
+public class CircleOfDiscs extends PluginModule implements Listener {
 
-    YGServer main;
-    ArrayList<Disc> discs = new ArrayList<>();
-    public NamespacedKey discId;
-    public static CircleOfDiscs instance;
+    public static ArrayList<Disc> discs = new ArrayList<>();
+    public static NamespacedKey discId;
 
     private HashMap<Player, Boolean> isInvis = new HashMap<>();
     private HashSet<Player> isXray = new HashSet<>();
 
     public CircleOfDiscs(YGServer mainPlugin) {
-        if(instance != null) return;
-        instance = this;
-        main = mainPlugin;
-        Implant.main = main;
-        Implant.animatingItem = new NamespacedKey(main, "codInfuseAnimating");
+        super(mainPlugin);
+    }
+
+    @Override
+    public void onEnable() {
         main.getCommand("cod").setExecutor(new CODCommand(main));
-//        main.getCommand("implant").setExecutor(new ImplantCommand(main));
-//        main.getCommand("runcorner").setExecutor(new CreateParticleCommand(main));
-        discId = new NamespacedKey(main, "discId");
         main.getServer().getPluginManager().registerEvents(this, main);
         registerDiscs();
     }
+
+    @Override
+    public void onDisable() {
+        main.getCommand("cod").setExecutor(null);
+        HandlerList.unregisterAll(this);
+        discs.forEach(d -> HandlerList.unregisterAll(d));
+        discs.clear();
+    }
+
     public void registerDiscs() {
         ItemStack item = new ItemStack(Material.MUSIC_DISC_13);
         ItemMeta meta = item.getItemMeta();
@@ -78,7 +80,7 @@ public class CircleOfDiscs implements Listener {
                 if(ticks++ >= 4) ticks = 0;
                 else return;
                 main.getServer().getOnlinePlayers().forEach(player -> {
-                    if(main.circleOfDiscsModule.playerHasDisc(player, this.id)) {
+                    if(CircleOfDiscs.playerHasDisc(player, this.id)) {
                         player.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 5 * 20, 0, false, false));
                         player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 5 * 20, 0, false, false));
                         return;
@@ -96,9 +98,6 @@ public class CircleOfDiscs implements Listener {
             @Override
             public void tick() {
                 main.getServer().getOnlinePlayers().forEach(p -> {
-                    // TODO: Cooldown for flying to prevent simply flying again after being stopped from timeout
-                    // TODO: just rewrite this it's bad and doesn't even account properly for when players should be able to fly
-                    // TODO: the timeout on flight should reset after touching ground
                     if(playerHasDisc(p, this.getId()) && p.getPotionEffect(PotionEffectType.LEVITATION) == null && (!pFlyTime.containsKey(p) || pFlyTime.get(p) != -1)) p.setAllowFlight(true);
                     else if(p.getGameMode() != GameMode.CREATIVE && p.getGameMode() != GameMode.SPECTATOR) p.setAllowFlight(false);
 
@@ -116,7 +115,12 @@ public class CircleOfDiscs implements Listener {
 
             @EventHandler
             public void playerMoveEvent(PlayerMoveEvent event) {
-                if(event.getPlayer().isOnGround()) {
+                // Deprecated because this is client controlled but nobody's
+                // hacking and it is rather a harmless problem if they are.
+
+                // This can be abused by quickly toggling flight off and
+                // isOnGround on, then immediately reverting it while in flight
+                if(event.getPlayer().isOnGround() && !event.getPlayer().isFlying()) {
                     pFlyTime.remove(event.getPlayer());
                     if(playerHasDisc(event.getPlayer(), this)) {
                         event.getPlayer().setAllowFlight(true);
@@ -285,13 +289,17 @@ public class CircleOfDiscs implements Listener {
             }
         }.runTaskTimer(main, 20, 20);
     }
-    public boolean playerHasDisc(Player player) {
+    public static boolean playerHasDisc(Player player) {
         for(ItemStack item : player.getInventory())
-            if(item != null && item.hasItemMeta() && item.getItemMeta().getPersistentDataContainer().has(discId, PersistentDataType.STRING))
-                return true;
+            if(itemIsDisc(item)) return true;
         return false;
     }
-    public boolean playerHasDisc(Player player, String id) {
+    public static boolean itemIsDisc(ItemStack item) {
+        if(item != null && item.hasItemMeta() && item.getItemMeta().getPersistentDataContainer().has(discId, PersistentDataType.STRING))
+            return true;
+        return false;
+    }
+    public static boolean playerHasDisc(Player player, String id) {
         for(ItemStack item : player.getInventory()) {
             if(item == null || !item.hasItemMeta()) continue;
             PersistentDataContainer data = item.getItemMeta().getPersistentDataContainer();
@@ -300,20 +308,21 @@ public class CircleOfDiscs implements Listener {
         }
         return false;
     }
-    public boolean playerHasDisc(Player player, Disc disc) {
+    public static boolean playerHasDisc(Player player, Disc disc) {
         return playerHasDisc(player, disc.getId());
     }
 
-    public void giveDisc(Inventory inventory, String id) {
+    public static boolean giveDisc(Inventory inventory, String id) {
         for(Disc disc : discs) {
             if(disc.getId().equals(id)) {
                 giveDisc(inventory, disc);
-                return;
+                return true;
             }
         }
+        return false;
     }
 
-    public void giveDisc(Inventory inventory, Disc disc) {
+    public static void giveDisc(Inventory inventory, Disc disc) {
         inventory.addItem(disc.getItem());
     }
 
@@ -366,6 +375,7 @@ public class CircleOfDiscs implements Listener {
         if(event.getItemDrop().getItemStack().hasItemMeta() && event.getItemDrop().getItemStack().getItemMeta().getPersistentDataContainer().has(discId, PersistentDataType.STRING)) {
             String discName = event.getItemDrop().getItemStack().getItemMeta().getPersistentDataContainer().get(discId, PersistentDataType.STRING);
             main.getLogger().info("Disc '" + discName + "' dropped by " + event.getPlayer().getName() + " at " + event.getPlayer().getLocation());
+            event.getItemDrop().setInvulnerable(true);
         }
     }
     @EventHandler

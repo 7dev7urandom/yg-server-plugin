@@ -1,14 +1,16 @@
 package com.YGServer.main.modules.ShulkerProtection;
 
+import com.YGServer.main.PluginModule;
 import com.YGServer.main.YGServer;
+import com.YGServer.main.modules.CircleOfDiscs.CircleOfDiscs;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.ShulkerBox;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -25,25 +27,29 @@ import org.bukkit.inventory.ShapelessRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class ShulkerProtection implements Listener {
+public class ShulkerProtection extends PluginModule implements Listener {
 
-    YGServer main;
     static NamespacedKey shulkerId;
+    static NamespacedKey shulkerRecipeId;
 
     public ShulkerProtection(YGServer pluginMain) {
-        main = pluginMain;
+        super(pluginMain);
         shulkerId = new NamespacedKey(main, "shulkerOwner");
+        shulkerRecipeId = new NamespacedKey(main, "shulkerBox");
+    }
+
+    @Override
+    public void onEnable() {
         ItemStack shulker = new ItemStack(Material.SHULKER_BOX);
-        ShapelessRecipe shulkerBox = new ShapelessRecipe(new NamespacedKey(pluginMain, "shulkerBox"), shulker);
+        ShapelessRecipe shulkerBox = new ShapelessRecipe(shulkerRecipeId, shulker);
         shulkerBox.addIngredient(1, Material.DIAMOND_BLOCK);
         shulkerBox.addIngredient(4, Material.EMERALD);
         shulkerBox.addIngredient(1, Material.CHEST);
-        pluginMain.getServer().addRecipe(shulkerBox);
+        main.getServer().addRecipe(shulkerBox);
         ItemStack shulkerNamed = new ItemStack(Material.SHULKER_BOX);
         ItemMeta meta = shulkerNamed.getItemMeta();
         meta.setLore(Arrays.asList("LOCKED"));
@@ -51,7 +57,16 @@ public class ShulkerProtection implements Listener {
         addShulkerNamedRecipe(1, shulkerNamed);
         addShulkerNamedRecipe(2, shulkerNamed);
         addShulkerNamedRecipe(3, shulkerNamed);
-        pluginMain.getServer().getPluginManager().registerEvents(this, pluginMain);
+        main.getServer().getPluginManager().registerEvents(this, main);
+    }
+
+    @Override
+    public void onDisable() {
+        main.getServer().removeRecipe(shulkerRecipeId);
+        main.getServer().removeRecipe(new NamespacedKey(main, "shulkerBoxNamed1"));
+        main.getServer().removeRecipe(new NamespacedKey(main, "shulkerBoxNamed2"));
+        main.getServer().removeRecipe(new NamespacedKey(main, "shulkerBoxNamed3"));
+        HandlerList.unregisterAll(this);
     }
 
     private void addShulkerNamedRecipe(int numOfNametags, ItemStack result) {
@@ -102,7 +117,7 @@ public class ShulkerProtection implements Listener {
             if (!Arrays.asList(item.getItemMeta().getPersistentDataContainer().get(shulkerId, PersistentDataType.STRING).split("\n")).contains(event.getEntity().getName()) || !(event.getEntity() instanceof Player)) {
                 // The entity is not named correctly or the entity is not a player
                 if(event.getEntity().hasPermission("ygserver.shulkers.pickup_any")) return;
-                if(main.circleOfDiscsModule.playerHasDisc((Player) event.getEntity(), "shulkerbox")) return;
+                if(CircleOfDiscs.playerHasDisc((Player) event.getEntity(), "shulkerbox")) return;
                 event.setCancelled(true);
             }
         }
@@ -153,7 +168,7 @@ public class ShulkerProtection implements Listener {
             if(box.getPersistentDataContainer().has(shulkerId, PersistentDataType.STRING)) {
                 if(!Arrays.asList(box.getPersistentDataContainer().get(shulkerId, PersistentDataType.STRING).split("\n")).contains(event.getPlayer().getName())) {
                     if(event.getPlayer().hasPermission("ygserver.shulkers.open_any")) return;
-                    if(main.circleOfDiscsModule.playerHasDisc(event.getPlayer(), "shulkerbox")) return;
+                    if(CircleOfDiscs.playerHasDisc(event.getPlayer(), "shulkerbox")) return;
                     event.setCancelled(true);
                     event.getPlayer().sendMessage(ChatColor.RED + "You do not have access to this block!");
                 }
