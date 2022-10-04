@@ -14,13 +14,13 @@ public abstract class PluginModule {
     public abstract void onDisable();
     void enable() {
         if(isEnabled) return;
-        main.getLogger().info("Enabling module " + this.getClass().getName());
+        main.getLogger().info("Enabling module " + this.getClass().getSimpleName());
         isEnabled = true;
         onEnable();
     }
     void disable() {
         if(!isEnabled) return;
-        main.getLogger().info("Disabling module " + this.getClass().getName());
+        main.getLogger().info("Disabling module " + this.getClass().getSimpleName());
         isEnabled = false;
         onDisable();
     }

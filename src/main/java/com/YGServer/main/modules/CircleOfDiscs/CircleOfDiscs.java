@@ -32,6 +32,7 @@ public class CircleOfDiscs extends PluginModule implements Listener {
 
     public CircleOfDiscs(YGServer mainPlugin) {
         super(mainPlugin);
+        discId = new NamespacedKey(main, "discId");
     }
 
     @Override

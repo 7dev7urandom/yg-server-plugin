@@ -17,15 +17,14 @@ import java.util.*;
 
 public class Decay extends PluginModule implements Listener {
     private final Material[] DECAYABLE_BLOCKS = {Material.GRASS_BLOCK, Material.STONE, Material.DIRT, Material.SAND, Material.GRAVEL, Material.GLASS};
-    YGServer main;
     static NamespacedKey decayedBlocks;
     private final int MIN_DECAY_TIME = 60 * 5;
     private final int MAX_DECAY_TIME = 60 * 10;
 
     private BukkitRunnable pending;
 
-    public Decay(YGServer main) {
-        super(main);
+    public Decay(YGServer mainPlugin) {
+        super(mainPlugin);
         decayedBlocks = new NamespacedKey(main, "decayedBlocks");
         pending = new BukkitRunnable() {
             @Override
@@ -33,8 +32,8 @@ public class Decay extends PluginModule implements Listener {
                 tick();
             }
         };
-        this.main.getCommand("undecay").setExecutor(new UndecayCommand(main));
-        this.main.getCommand("decay").setExecutor(new DecayCommand(main));
+        main.getCommand("undecay").setExecutor(new UndecayCommand(this));
+        main.getCommand("decay").setExecutor(new DecayCommand(this));
     }
 
     @Override
@@ -48,12 +47,18 @@ public class Decay extends PluginModule implements Listener {
     }
 
     void tick() {
+        pending = new BukkitRunnable() {
+            @Override
+            public void run() {
+                tick();
+            }
+        };
         pending.runTaskLater(main, 20 * (int) (Math.random() * (MAX_DECAY_TIME - MIN_DECAY_TIME) + MIN_DECAY_TIME));
         if(!main.getConfig().getBoolean("doDecay", true)) return;
         Player[] players = main.getServer().getOnlinePlayers().toArray(new Player[0]);
         for (Player player : players) {
             if(main.essentials.getUser(player) != null && main.essentials.getUser(player).isAfk()) break;
-//            if(player.getWorld().getName().startsWith("world2")) break;
+            if(player.getWorld().getName().startsWith("world2")) break;
             decayBlockInPlayerRange(player, 10);
 //            if(Math.random() > 0.9) {
 //                DecayedBlock[] decayed = getDecayedBlocksFromBox(player.getLocation(), 1);
@@ -61,8 +66,8 @@ public class Decay extends PluginModule implements Listener {
 //            }
         }
     }
-    public void decayBlockInPlayerRange(Player player, int range) {
-        if(main.essentials.getUser(player) != null && main.essentials.getUser(player).isAfk()) return;
+    public Location decayBlockInPlayerRange(Player player, int range) {
+        if(main.essentials.getUser(player) != null && main.essentials.getUser(player).isAfk()) return null;
         ArrayList<Block> decayableRange = new ArrayList<>();
         Location location = player.getLocation();
         for (int x = location.getBlockX() - range; x <= location.getBlockX() + range; x++) {
@@ -78,14 +83,18 @@ public class Decay extends PluginModule implements Listener {
                 }
             }
         }
-        if(decayableRange.size() == 0) return;
-        decay(decayableRange.get((int)(Math.random() * decayableRange.size())));
+        if(decayableRange.size() == 0) return null;
+        Block ret = decayableRange.get((int)(Math.random() * decayableRange.size()));
+        decay(ret);
+        return ret.getLocation();
     }
-    public void unDecay(Chunk chunk) {
-        for(DecayedBlock block : getDecayedBlocksFromChunk(chunk)) {
+    public int unDecay(Chunk chunk) {
+        DecayedBlock[] decayedBlocksArr = getDecayedBlocksFromChunk(chunk);
+        for(DecayedBlock block : decayedBlocksArr) {
             chunk.getWorld().getBlockAt(block.block.getLocation()).setType(block.oldMaterial);
         }
         chunk.getPersistentDataContainer().remove(decayedBlocks);
+        return decayedBlocksArr.length;
     }
     public void unDecay(DecayedBlock block) {
         unDecay(new DecayedBlock[]{block}, block.block.getChunk());

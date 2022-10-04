@@ -22,7 +22,6 @@ import org.bukkit.util.Vector;
 import java.util.Arrays;
 
 public class Portal2World2Opener extends PluginModule implements Listener {
-    private static YGServer main;
     public static BoundingBox portalArea;
     public static Location[] discFinalLocations;
     public static Item[] discsAtLocations;
@@ -32,8 +31,8 @@ public class Portal2World2Opener extends PluginModule implements Listener {
 
     BukkitRunnable pending;
 
-    public Portal2World2Opener(YGServer main) {
-        super(main);
+    public Portal2World2Opener(YGServer pluginMain) {
+        super(pluginMain);
         world = Bukkit.getWorld("world");
         portalArea = BoundingBox.of(new Location(world, 95, 90, -375), new Location(world, 77, 110, -400));
         discFinalLocations = new Location[]{new Location(world, 87.5, 100.5, -385.5), new Location(world, 87.5, 100.5, -384.5), new Location(world, 88.5, 100.5, -385.5), new Location(world, 88.5, 100.5, -384.5)};

@@ -20,12 +20,12 @@ public class ModuleCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if(args.length == 0 || args[0].equals("list")) {
-            sender.sendMessage("Modules: ", String.join(", ", main.modules.stream().map(m -> (m.isEnabled() ? ChatColor.GREEN : ChatColor.RED) + m.getClass().getName() ).toList()));
+            sender.sendMessage("Modules: ", String.join(", ", main.modules.stream().map(m -> (m.isEnabled() ? ChatColor.GREEN : ChatColor.RED) + m.getClass().getSimpleName() ).toList()));
             return true;
         } else if(args[0].equals("enable")) {
             if(args.length < 2) return false;
             for(PluginModule m : main.modules) {
-                if(m.getClass().getName().equals(args[1])) {
+                if(m.getClass().getSimpleName().equals(args[1])) {
                     m.enable();
                     sender.sendMessage(args[1] + " has been enabled");
                     return true;
@@ -36,7 +36,7 @@ public class ModuleCommand implements CommandExecutor {
         } else if (args[0].equals("disable")) {
             if(args.length < 2) return false;
             for(PluginModule m : main.modules) {
-                if(m.getClass().getName().equals(args[1])) {
+                if(m.getClass().getSimpleName().equals(args[1])) {
                     m.disable();
                     sender.sendMessage(args[1] + " has been disabled");
                     return true;
@@ -46,7 +46,11 @@ public class ModuleCommand implements CommandExecutor {
             return true;
         } else {
             for (PluginModule m : main.modules) {
-                if (m.getClass().getName().equals(args[0])) {
+                if (m.getClass().getSimpleName().equals(args[0])) {
+                    if(!m.isEnabled()) {
+                        sender.sendMessage("Module is disabled!");
+                        return true;
+                    }
                     return m.command(sender, String.join(" ", args), Arrays.copyOfRange(args, 1, args.length));
                 }
             }

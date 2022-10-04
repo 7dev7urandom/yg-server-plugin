@@ -9,16 +9,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class UndecayCommand implements CommandExecutor {
 
-    YGServer main;
+    Decay decay;
 
-    public UndecayCommand(YGServer main) {
-        this.main = main;
+    public UndecayCommand(Decay decay) {
+        this.decay = decay;
     }
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if(!sender.hasPermission("ygserver.decay.command.undecay")) return true;
         if(!(sender instanceof Player)) return false;
-        main.decayModule.unDecay(((Player)sender).getLocation().getChunk());
+        decay.unDecay(((Player)sender).getLocation().getChunk());
+        sender.sendMessage("Undecayed the chunk you are in");
         return true;
     }
 }

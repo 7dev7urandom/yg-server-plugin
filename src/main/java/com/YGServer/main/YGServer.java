@@ -23,14 +23,11 @@ import java.util.List;
 
 public class YGServer extends JavaPlugin implements Listener {
 
-    public Decay decayModule;
     public MultiverseBedrockFix multiverseBedrockFix;
     public Essentials essentials = (Essentials) getServer().getPluginManager().getPlugin("Essentials");
     public MultiverseCore multiverse = (MultiverseCore) getServer().getPluginManager().getPlugin("Multiverse-Core");
 
-    public Portal2World2Opener portalManager;
-
-    public ArrayList<PluginModule> modules;
+    public ArrayList<PluginModule> modules = new ArrayList<>();
     @Override
     public void onDisable() {}
 
@@ -53,7 +50,7 @@ public class YGServer extends JavaPlugin implements Listener {
                 defaults.add("list");
             }
             for (PluginModule m : modules) {
-                defaults.add(m.getClass().getName());
+                defaults.add(m.getClass().getSimpleName());
             }
             List<String> ret = new ArrayList<>();
             if (args.length == 0) ret = defaults;

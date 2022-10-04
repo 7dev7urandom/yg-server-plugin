@@ -9,16 +9,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class DecayCommand implements CommandExecutor {
 
-    YGServer main;
+    Decay decay;
 
-    public DecayCommand(YGServer main) {
-        this.main = main;
+    public DecayCommand(Decay decay) {
+        this.decay = decay;
     }
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if(!sender.hasPermission("ygserver.decay.command.decay")) return true;
         if(!(sender instanceof Player)) return false;
-        main.decayModule.decayBlockInPlayerRange(((Player)sender), 10);
+        decay.decayBlockInPlayerRange(((Player)sender), 10);
+        sender.sendMessage("Decayed a block within 10 blocks of you");
         return true;
     }
 }

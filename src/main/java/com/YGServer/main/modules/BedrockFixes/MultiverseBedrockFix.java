@@ -1,6 +1,7 @@
 package com.YGServer.main.modules.BedrockFixes;
 
 import com.YGServer.main.YGServer;
+import com.YGServer.main.modules.world2.Portal2World2Opener;
 import com.onarandombox.MultiverseCore.api.MVWorldManager;
 import com.onarandombox.MultiverseCore.destination.CannonDestination;
 import com.onarandombox.MultiverseCore.event.MVTeleportEvent;
@@ -25,6 +26,19 @@ public class MultiverseBedrockFix {
         main.getLogger().warning("Registering listeners");
         tryRegister("com.onarandombox.MultiverseCore.event.MVTeleportEvent", new TeleportListener(main));
         tryRegister("com.onarandombox.MultiversePortals.event.MVPortalEvent", new PortalListener(main));
+
+        // Fix players stuck in portal2world2
+        new BukkitRunnable(){
+            @Override
+            public void run() {
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    if(p.getLocation().subtract(new Vector(88, 51, -385)).lengthSquared() < 4) {
+                        p.setVelocity(new Vector(0, 15, 0));
+                        p.sendMessage("Looks like you might have gotten stuck in the portal. Here's a boost!");
+                    }
+                }
+            }
+        }.runTaskTimer(main, 0, 20 * 2);
     }
 
     public void tryRegister(String eventClass, AbstractListener listener) {
