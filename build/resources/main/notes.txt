@@ -1,3 +1,0 @@
-TODO:
-Check interaction with blocks and discs
-Maybe make invis disc an offhand thing
